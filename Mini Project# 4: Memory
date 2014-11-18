@@ -1,0 +1,94 @@
+Mini-project development process:
+
+As usual, we suggest that you start from the program template for this mini-project.
+1.  Model the deck of cards used in Memory as a list consisting of 16 numbers with each number lying in the range [0,8) and appearing twice. We suggest that you create this list by concatenating two list with range [0,8) together. Use the Docs to locate the list concatenation operator.
+2.  Write a draw handler that iterates through the Memory deck using a for loop and uses draw_text to draw the number associated with each card on the canvas. The result should be a horizontal sequence of evenly-spaced numbers drawn on the canvas.
+3.  Shuffle the deck using random.shuffle(). Remember to debug your canvas drawing code before shuffling to make debugging easier.
+4.  Next, modify the draw handler to either draw a blank green rectangle or the card's value. To implement this behavior, we suggest that you create a second list called exposed. In the exposed list, the ith entry should be True if the ith card is face up and its value is visible or False if the ith card is face down and it's value is hidden. We suggest that you initialize exposed to some known values while testing your drawing code with this modification.
+5.  Now, add functionality to determine which card you have clicked on with your mouse. Add an event handler for mouse clicks that takes the position of the mouse click and prints the index of the card that you have clicked on to the console. To make determining which card you have clicked on easy, we suggest sizing the canvas so that the sequence of cards entirely fills the canvas.
+6.  Modify the event handler for mouse clicks to flip cards based on the location of the mouse click. If the player clicked on the ith card, you can change the value of exposed[i] from False to True. If the card is already exposed, you should ignore the mouseclick. At this point, the basic infrastructure for Memory is done.
+7.  You now need to add game logic to the mouse click handler for selecting two cards and determining if they match. We suggest following the game logic in the example code discussed in the Memory video. State 0 corresponds to the start of the game. In state 0, if you click on a card, that card is exposed, and you switch to state 1. State 1 corresponds to a single exposed unpaired card. In state 1, if you click on an unexposed card, that card is exposed and you switch to state 2. State 2 corresponds to the end of a turn. In state 2, if you click on an unexposed card, that card is exposed and you switch to state 1.
+8.  Note that in state 2, you also have to determine if the previous two cards are paired or unpaired. If they are unpaired, you have to flip them back over so that they are hidden before moving to state 1. We suggest that you use two global variables to store the index of each of the two cards that were clicked in the previous turn.
+9.  Add a counter that keeps track of the number of turns and uses set_text to update this counter as a label in the control panel. (BTW, Joe's record is 12 turns.)  This counter should be incremented after either the first or second card is flipped during a turn.
+10. Finally, implement the new_game() function (if you have not already) so that the "Reset" button reshuffles the cards, resets the turn counter and restarts the game. All cards should start the game hidden.
+11. (Optional) You may replace the draw_text for each card by a draw_image that uses one of eight different images.
+
+Main Coding Part:
+
+# implementation of card game - Memory
+
+import simplegui
+import random
+
+WIDTH=50;
+HEIGHT=100;
+numlist=[];
+exposed=[];
+moves=0;
+state=0;
+choices=[-1,-1];
+
+# helper function to initialize globals
+def new_game():
+    global numlist,exposed,moves,state,choices;
+    numlist=range(0,8);
+    numlist.extend(range(0,8));
+    random.shuffle(numlist);
+    random.shuffle(numlist);
+    exposed=[0]*16;
+    moves=0;
+    state=0;
+    choices=[-1,-1];
+    l.set_text("Moves = "+str(moves)); 
+
+# define event handlers
+def mouseclick(pos):
+    # add game state logic here
+    global choices,state,moves;
+    index=int(pos[0]/WIDTH);
+    if(state==0):
+        if(exposed[index]==0):
+            if(numlist[choices[0]]!=numlist[choices[1]]):
+                exposed[choices[0]]=0;
+                exposed[choices[1]]=0;
+            exposed[index]=1;
+            state=1;
+            choices[0]=index;
+    elif state == 1:
+        if(exposed[index]==0):
+            state=0;
+            exposed[index]=1;
+            choices[1]=index;
+            moves=moves+1;    
+            l.set_text("Moves = "+str(moves));
+            if not(0 in exposed):
+                print "The Game Ended in "+str(moves)+" moves";
+    
+# cards are logically 50x100 pixels in size    
+def draw(canvas):
+    for index in range(0,len(numlist)):
+        if(exposed[index]==0):
+            canvas.draw_polygon([(WIDTH*index,0), (WIDTH*(index+1), 0), (WIDTH*(index+1), 100),(WIDTH*index,100)],3,"White","Navy");
+        else:
+            canvas.draw_text(str(numlist[index]),[WIDTH*index+5,HEIGHT-25],60,"Lime");
+
+
+# create frame and add a button and labels
+frame = simplegui.create_frame("~Memory~", 800, 100)
+frame.add_button("RESET", new_game)
+l=frame.add_label("Moves = 0")
+
+# initialize global variables
+new_game()
+
+# register event handlers
+frame.set_mouseclick_handler(mouseclick)
+frame.set_draw_handler(draw)
+
+# get things rolling
+frame.start()
+
+
+# Always remember to review the grading rubric
+
+
